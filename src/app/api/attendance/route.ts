@@ -70,8 +70,8 @@ export async function POST(request: NextRequest) {
           userId: session.user.id,
           date: now,
           checkIn: now,
-          status: 'PRESENT',
-          notes: notes,
+          status: 'present',
+          description: notes,
         },
       });
 
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
         },
         data: {
           checkOut: now,
-          notes: notes ? `${existingAttendance.notes || ''} | ${notes}` : existingAttendance.notes,
+          description: notes ? `${existingAttendance.description || ''} | ${notes}` : existingAttendance.description,
         },
       });
 

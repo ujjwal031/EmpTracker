@@ -1,16 +1,11 @@
 import NextAuth from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import GitHubProvider from "next-auth/providers/github";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
-import GitHubProvider from "next-auth/providers/github";
-import CredentialsProvider from "next-auth/providers/credentials";
 import bcryptjs from "bcryptjs";
 
-export const {
-  handlers: { GET, POST },
-  auth,
-  signIn,
-  signOut,
-} = NextAuth({
+export const authOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     GitHubProvider({
@@ -76,15 +71,15 @@ export const {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
+        token.sub = user.id;
         token.role = user.role;
       }
       return token;
     },
     async session({ session, token }) {
       if (token && session.user) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as string;
+        session.user.id = token.sub || "";
+        session.user.role = token.role || "employee";
       }
       return session;
     },
@@ -97,4 +92,15 @@ export const {
     strategy: "jwt",
   },
   secret: process.env.NEXTAUTH_SECRET,
-}); 
+};
+
+const handler = NextAuth(authOptions);
+
+export { handler as GET, handler as POST };
+
+export const auth = async () => {
+  return await handler.auth();
+};
+
+export const signIn = handler.signIn;
+export const signOut = handler.signOut; 

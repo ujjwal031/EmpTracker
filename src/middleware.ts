@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { auth } from './app/api/auth/[...nextauth]/auth';
+import { getToken } from 'next-auth/jwt';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -16,11 +16,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
   
-  // Check if user is authenticated
-  const session = await auth();
+  // Use JWT for authentication in middleware
+  const token = await getToken({ 
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET
+  });
   
   // If not authenticated, redirect to login
-  if (!session) {
+  if (!token) {
     const url = new URL('/login', request.url);
     url.searchParams.set('callbackUrl', encodeURI(pathname));
     return NextResponse.redirect(url);
@@ -31,7 +34,7 @@ export async function middleware(request: NextRequest) {
   const isAdminPath = adminOnlyPaths.some(path => pathname.startsWith(path));
   
   // Check admin access
-  if (isAdminPath && session.user.role !== 'admin') {
+  if (isAdminPath && token.role !== 'admin') {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
   
