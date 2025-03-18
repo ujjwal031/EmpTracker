@@ -3,7 +3,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import GitHubProvider from "next-auth/providers/github";
 import CredentialsProvider from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
+import bcryptjs from "bcryptjs";
 
 export const {
   handlers: { GET, POST },
@@ -22,7 +22,7 @@ export const {
           name: profile.name || profile.login,
           email: profile.email,
           image: profile.avatar_url,
-          role: "EMPLOYEE", // Default role for GitHub sign-ins
+          role: "employee", // Default role for GitHub sign-ins
         };
       },
     }),
@@ -54,7 +54,7 @@ export const {
         }
 
         // Verify password
-        const passwordMatch = await bcrypt.compare(
+        const passwordMatch = await bcryptjs.compare(
           credentials.password,
           user.password
         );

@@ -31,7 +31,7 @@ export async function middleware(request: NextRequest) {
   const isAdminPath = adminOnlyPaths.some(path => pathname.startsWith(path));
   
   // Check admin access
-  if (isAdminPath && session.user.role !== 'ADMIN') {
+  if (isAdminPath && session.user.role !== 'admin') {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
   
