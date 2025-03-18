@@ -19,7 +19,7 @@ function prompt(question) {
 }
 
 async function main() {
-  console.log('\n🚀 Setting up EmpTrack...\n');
+  console.log('\n🚀 Setting up EmpTrack with MongoDB...\n');
 
   // Check if .env file exists
   const envExists = fs.existsSync('.env');
@@ -40,14 +40,14 @@ async function main() {
     execSync('npx prisma generate', { stdio: 'inherit' });
     console.log('✅ Prisma client generated.');
     
-    const runMigration = await prompt('\nRun database migrations? This will reset your database. (y/N): ');
-    if (runMigration.toLowerCase() === 'y') {
-      execSync('npx prisma migrate dev --name init', { stdio: 'inherit' });
-      console.log('✅ Database migrations completed.');
+    const runDbPush = await prompt('\nPush schema to MongoDB? (y/N): ');
+    if (runDbPush.toLowerCase() === 'y') {
+      execSync('npx prisma db push', { stdio: 'inherit' });
+      console.log('✅ Database schema pushed to MongoDB.');
       
       const seedDb = await prompt('\nSeed the database with sample data? (Y/n): ');
       if (seedDb.toLowerCase() !== 'n') {
-        execSync('npm run db:seed', { stdio: 'inherit' });
+        execSync('npm run seed', { stdio: 'inherit' });
         console.log('✅ Database seeded with sample data.');
       }
     }
@@ -56,28 +56,44 @@ async function main() {
     console.log('\nnpm run dev\n');
   } catch (error) {
     console.error('❌ Error during database setup:', error.message);
-    console.log('\nPlease check your database connection and try again.');
+    console.log('\nPlease check your MongoDB connection and try again.');
   }
   
   rl.close();
 }
 
 async function setupEnv() {
-  console.log('Setting up environment variables...');
+  console.log('Setting up environment variables for MongoDB...');
   
-  // Get database details
-  const dbUser = await prompt('Database username (default: postgres): ') || 'postgres';
-  const dbPass = await prompt('Database password: ');
-  const dbHost = await prompt('Database host (default: localhost): ') || 'localhost';
-  const dbPort = await prompt('Database port (default: 5432): ') || '5432';
-  const dbName = await prompt('Database name (default: emptracker): ') || 'emptracker';
+  // Get MongoDB details
+  console.log('\n📝 MongoDB Connection Details:');
+  const useAtlas = await prompt('Are you using MongoDB Atlas? (y/N): ');
+  
+  let dbUrl = '';
+  
+  if (useAtlas.toLowerCase() === 'y') {
+    console.log('\n📌 For MongoDB Atlas, you need the connection string from your Atlas dashboard');
+    dbUrl = await prompt('MongoDB Atlas connection string (mongodb+srv://...): ');
+  } else {
+    const dbUser = await prompt('MongoDB username (leave empty for none): ');
+    const dbPass = dbUser ? await prompt('MongoDB password: ') : '';
+    const dbHost = await prompt('MongoDB host (default: localhost): ') || 'localhost';
+    const dbPort = await prompt('MongoDB port (default: 27017): ') || '27017';
+    const dbName = await prompt('Database name (default: emptrack): ') || 'emptrack';
+    
+    if (dbUser && dbPass) {
+      dbUrl = `mongodb://${dbUser}:${dbPass}@${dbHost}:${dbPort}/${dbName}`;
+    } else {
+      dbUrl = `mongodb://${dbHost}:${dbPort}/${dbName}`;
+    }
+  }
   
   // Generate NEXTAUTH_SECRET
   const secret = crypto.randomBytes(32).toString('hex');
   
   // Create .env file
   const envContent = `# Database connection
-DATABASE_URL="postgresql://${dbUser}:${dbPass}@${dbHost}:${dbPort}/${dbName}?schema=public"
+DATABASE_URL="${dbUrl}"
 
 # NextAuth
 NEXTAUTH_SECRET="${secret}"
@@ -89,7 +105,7 @@ GITHUB_CLIENT_SECRET=""
 `;
 
   fs.writeFileSync('.env', envContent);
-  console.log('✅ .env file created with your database settings and a secure random secret.');
+  console.log('✅ .env file created with your MongoDB settings and a secure random secret.');
 }
 
 main().catch(err => {

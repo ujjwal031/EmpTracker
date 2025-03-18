@@ -9,23 +9,23 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 // NextAuth Models
 model Account {
-  id                String  @id @default(cuid())
-  userId            String
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -34,42 +34,42 @@ model Account {
 }
 
 model Session {
-  id           String   @id @default(cuid())
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
   sessionToken String   @unique
-  userId       String
+  userId       String   @db.ObjectId
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  password      String?
-  image         String?
-  role          Role      @default(EMPLOYEE)
-  position      String?
-  department    String?
-  joinedAt      DateTime  @default(now())
-  accounts      Account[]
-  sessions      Session[]
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  email          String       @unique
+  emailVerified  DateTime?
+  password       String
+  image          String?
+  role           String       @default("employee") // admin, manager, employee
+  position       String?
+  department     String?
+  joinedAt       DateTime     @default(now())
+  accounts       Account[]
+  sessions       Session[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
   
   // Employee specific data
-  attendance    Attendance[]
+  attendances    Attendance[]
   githubActivities GithubActivity[]
-  meetings      MeetingAttendee[]
-  performance   Performance[]
-  createdMeetings Meeting[]     @relation("MeetingOrganizer")
-}
-
-enum Role {
-  ADMIN
-  MANAGER
-  EMPLOYEE
+  meetings         Meeting[]      @relation("UserMeetings")
+  createdMeetings  Meeting[]     @relation("MeetingOrganizer")
+  performance      Performance[]
+  tasks            Task[]
+  meetingsAttending MeetingAttendee[]
+  githubUsername   String?
 }
 
 model VerificationToken {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
   identifier String
   token      String   @unique
   expires    DateTime
@@ -79,84 +79,75 @@ model VerificationToken {
 
 // Application specific models
 model Attendance {
-  id        String   @id @default(cuid())
-  date      DateTime @default(now())
-  checkIn   DateTime
-  checkOut  DateTime?
-  status    AttendanceStatus
-  notes     String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-enum AttendanceStatus {
-  PRESENT
-  ABSENT
-  LATE
-  HALF_DAY
-  ON_LEAVE
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String    @db.ObjectId
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checkIn     DateTime  @default(now())
+  checkOut    DateTime?
+  status      String    @default("present") // present, absent, late, half_day, on_leave
+  date        DateTime  @default(now())
+  description String?
 }
 
 model GithubActivity {
-  id          String   @id @default(cuid())
-  date        DateTime @default(now())
-  activityType GithubActivityType
-  repository  String
-  commitMessage String?
-  pullRequestTitle String?
-  pullRequestNumber Int?
-  issueTitle  String?
-  issueNumber Int?
-  userId      String
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-enum GithubActivityType {
-  COMMIT
-  PULL_REQUEST
-  ISSUE
-  REVIEW
+  commitCount Int      @default(0)
+  prCount     Int      @default(0)
+  issueCount  Int      @default(0)
+  repository  String?
+  date        DateTime @default(now())
 }
 
 model Meeting {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  startTime   DateTime
-  endTime     DateTime
-  location    String?
-  meetingLink String?
-  createdAt   DateTime @default(now())
-  organizerId String
-  organizer   User     @relation("MeetingOrganizer", fields: [organizerId], references: [id])
-  attendees   MeetingAttendee[]
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  title        String
+  description  String?
+  startTime    DateTime
+  endTime      DateTime
+  location     String?
+  meetingLink  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  organizerId  String   @db.ObjectId
+  organizer    User     @relation("MeetingOrganizer", fields: [organizerId], references: [id])
+  userId       String   @db.ObjectId
+  user         User     @relation("UserMeetings", fields: [userId], references: [id])
+  attendees    MeetingAttendee[]
 }
 
 model MeetingAttendee {
-  id        String   @id @default(cuid())
-  meetingId String
-  userId    String
-  status    AttendeeStatus @default(PENDING)
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  meetingId String   @db.ObjectId
+  userId    String   @db.ObjectId
+  status    String   @default("pending") // pending, accepted, declined, attended
   meeting   Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([meetingId, userId])
 }
 
-enum AttendeeStatus {
-  PENDING
-  ACCEPTED
-  DECLINED
-  ATTENDED
-}
-
 model Performance {
-  id          String   @id @default(cuid())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   date        DateTime
-  rating      Float    @db.DoublePrecision
+  rating      Float
   feedback    String?
   achievements String?
   goals       String?
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  status      String    @default("pending") // pending, in-progress, completed
+  priority    String    @default("medium") // low, medium, high
+  dueDate     DateTime?
+  userId      String    @db.ObjectId
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
