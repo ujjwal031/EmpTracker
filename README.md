@@ -1,139 +1,136 @@
 # EmpTrack - Employee Management System
 
-A comprehensive web application for employee management, tracking attendance, GitHub activity, meetings, and performance metrics.
+A comprehensive employee management platform built with Next.js, React, TypeScript, MongoDB Atlas, and Tailwind CSS.
 
 ## Features
 
-- Dashboard with performance metrics and activity tracking
-- Attendance management with check-in/check-out functionality
-- GitHub integration for code contributions
-- Meeting scheduling and management
-- Performance analytics
-- Dark/light mode support
-- Responsive design
-
-## Tech Stack
-
-- Next.js (App Router)
-- React
-- TypeScript
-- Tailwind CSS
-- Framer Motion
-- NextAuth.js for authentication
-- Prisma ORM
-- PostgreSQL
+- 📊 **Dashboard Analytics**: Real-time attendance stats and performance metrics
+- 👥 **Employee Management**: Track employee details, roles, and departments
+- ⏱️ **Attendance Tracking**: Record check-ins, check-outs, and attendance status
+- 📝 **Task Management**: Assign and monitor tasks with priority levels
+- 📅 **Meeting Scheduler**: Organize and track team meetings
+- 🌓 **Dark/Light Mode**: Toggle between themes for better viewing comfort
+- 📱 **Responsive Design**: Works seamlessly on desktop, tablet, and mobile
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js (v18 or newer)
-- PostgreSQL database
-- GitHub OAuth application (optional, for GitHub login)
+- Node.js 18.x or later
+- MongoDB Atlas account (free tier works fine)
+- npm or yarn package manager
 
-### Setup PostgreSQL
+### Setup Instructions
 
-1. Install PostgreSQL on your machine or use a cloud provider
-2. Create a new database:
-   ```sql
-   CREATE DATABASE emptracker;
-   ```
-3. Make note of your connection details (username, password, host, port)
+1. **Clone the repository**
 
-### Setup the Application
+```bash
+git clone https://github.com/your-username/emptrack.git
+cd emptrack
+```
 
-1. Clone the repository:
+2. **Install dependencies**
+
+```bash
+npm install
+# or
+yarn install
+```
+
+3. **Set up MongoDB Atlas**
+
+   a. Create a free MongoDB Atlas account at [https://www.mongodb.com/cloud/atlas/register](https://www.mongodb.com/cloud/atlas/register)
+   
+   b. Create a new project
+   
+   c. Build a free cluster (M0)
+   
+   d. Create a database user with read/write permissions
+   
+   e. Add your current IP address to the IP Access List
+   
+   f. Get your connection string by clicking "Connect" > "Connect your application"
+
+4. **Configure environment variables**
+
+   a. Copy the `.env.example` file to `.env`
+   
    ```bash
-   git clone https://github.com/yourusername/emp-mana.git
-   cd emp-mana
+   cp .env.example .env
    ```
-
-2. Install dependencies:
-   ```bash
-   npm install
+   
+   b. Update the `.env` file with your MongoDB Atlas connection string
+   
    ```
-
-3. Configure environment variables:
-   Copy the `.env` file and update it with your database and authentication settings:
-   ```
-   DATABASE_URL="postgresql://username:password@localhost:5432/emptracker?schema=public"
-   NEXTAUTH_SECRET="your-secure-random-string"
+   DATABASE_URL="mongodb+srv://<username>:<password>@<cluster-address>/<database>?retryWrites=true&w=majority"
+   NEXTAUTH_SECRET="your-secret-key-here-min-32-chars"
    NEXTAUTH_URL="http://localhost:3000"
-   
-   # Optional for GitHub login
-   GITHUB_CLIENT_ID=""
-   GITHUB_CLIENT_SECRET=""
    ```
 
-4. Initialize the database:
-   ```bash
-   # Generate Prisma client
-   npm run prisma:generate
-   
-   # Run database migrations
-   npm run prisma:migrate
-   
-   # Seed the database with sample data
-   npm run db:seed
-   ```
+5. **Push the schema to MongoDB**
 
-5. Run the development server:
-   ```bash
-   npm run dev
-   ```
+```bash
+npx prisma db push
+```
 
-6. Open [http://localhost:3000](http://localhost:3000) in your browser
+6. **Seed the database with test data**
 
-## Default Login Credentials
+```bash
+npm run seed
+```
 
-After seeding the database, you can log in with the following test accounts:
+7. **Run the development server**
 
-- **Admin**
+```bash
+npm run dev
+# or
+yarn dev
+```
+
+8. **Access the application**
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Login Credentials (after running seed script)
+
+- **Admin:**
   - Email: admin@emptrack.com
   - Password: admin123
 
-- **Employee**
+- **Employee:**
   - Email: employee@emptrack.com
   - Password: employee123
 
-## Database Schema
+## Project Structure
 
-The application uses several models:
+```
+emptrack/
+├── prisma/             # Database schema and migrations
+├── public/             # Static assets
+├── src/
+│   ├── app/            # Next.js app router pages
+│   ├── components/     # React components
+│   ├── lib/            # Utility functions and helpers
+│   ├── server/         # Server-side code
+│   └── styles/         # CSS and styling
+├── .env                # Environment variables
+├── .gitignore
+├── next.config.js
+├── package.json
+├── README.md
+├── tailwind.config.js
+└── tsconfig.json
+```
 
-- `User`: Stores user information and authentication details
-- `Attendance`: Tracks daily check-ins and check-outs
-- `GithubActivity`: Records GitHub contributions
-- `Meeting`: Manages scheduled meetings
-- `Performance`: Stores performance reviews and ratings
+## Technologies Used
 
-## Authentication
-
-The application uses NextAuth.js for authentication with:
-
-- Email/password login
-- GitHub OAuth (if configured)
-- JWT session handling
-- Role-based access control
-
-## Development
-
-### Key Features to Implement or Customize
-
-1. **GitHub Integration**: Add real GitHub API integration for tracking code contributions
-2. **Notifications**: Implement notification system for meetings and actions
-3. **Reporting**: Add analytics and reporting features
-4. **Mobile App**: Develop a companion mobile app for easier check-ins
-
-### Folder Structure
-
-- `/src/app`: Next.js App Router pages and layouts
-- `/src/components`: Reusable React components
-- `/src/lib`: Utility functions and shared libraries
-- `/prisma`: Database schema and migrations
-
-## Screenshots
-
-Coming soon!
+- **Frontend**: React, Next.js, TypeScript, Tailwind CSS, Framer Motion
+- **Backend**: Next.js API routes, NextAuth.js
+- **Database**: MongoDB Atlas
+- **Authentication**: NextAuth.js with credentials and GitHub providers
+- **State Management**: React Context API
+- **Form Handling**: React Hook Form
+- **Styling**: Tailwind CSS with dark mode support
 
 ## Contributing
 
@@ -141,4 +138,10 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-[MIT](LICENSE)
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Next.js team for the amazing framework
+- Vercel for hosting and deployment
+- MongoDB team for the database service
